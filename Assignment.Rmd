@@ -1,22 +1,71 @@
 ---
-title: "Assignment"
+title: "Practical Machine Learning Assignment"
 author: "John Robinson"
 date: "3 November 2015"
 output: html_document
 ---
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+## Introduction 
+
+This report describes a data learning and prediction exercise performed as part of the Coursera Practical Machine Learning course.Data from a publicly avaliable source were provided by the course supervisors as two files of results, a large training set, and a smaller test set.The data were investigated to create parsimonious sets of data, excluding any empty columns and non-numeric non predictive data such as identifiers.
+
+These data were then investigated for fields with close to zero variation, and also for close correlations, before selecting a set of principal components with which to train the data modelling.
+
+Cross validation was performed using the training data, and the best model used to predict the outcome of the test set, and to determine the expected out of sample error rate.
+
+## Background
+
+Human Activity Recognition is a research area of growing interest among computer researchers.The availability of human activity data has incresed dramatically with the sales of Smart Phones, Fitness Bands and other activity monitors.
+
+In Veloso et. al (Reference 1), data on 'Qualitative Activity Recognition of Weight Lifting Exercises are presented. The data used in this study has been made publicly available and forms the basis of this study. The work focussed on predicting how well a group of people performed a dumbell lifting exercise.
+
+## Data
+
+Using wearable sensors, "Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E)." (reference 2)
+
+The data collected in this research forms the files provided for this machine learning exercise, where the object is to train a model using the training set data, and predict the class type of the results that form the test set.
+
+###### Loading the data
+
+The csv formatted files were downloaded to the local R-Studio project folder, and read into R as follows:
+
+```{r }
+TrainData <- read.csv("pml-Training.csv")
+TestData <- read.csv("pml-Testing.csv")
+```
+
+###### Initial inspection
+
+The resulting data frames contain 160 columns of information, with 19622 observations in the training set, and 20 in the test set. Such a large difference in sizes would not normally be appropriate, but for the purposes of briefness of submission data the test set was kept deliberately small.
+
+An initial visual inspection of the data showed that many of the columns contain either blank or NA data. Inspecting the Test data alone these columns were seen to be completely empty of data, and therefore could not be used within a prediction model, so those columns were removed from both training and test data sets.
+
+```{r }
+TrainData <- TrainData[,colSums(is.na(TestData))==0]
+TestData <- TestData[,colSums(is.na(TestData))==0]
+```
+This left a total of 60 columns, including the outcome data. On detailed inspection of the data it was apparent that the first seven columns contained only non-numeric, and non predictive values, so they were removed to provide two data sets with 52 possible predictors, and one outcome.
+
+```{r }
+TrainData <- TrainData[,8:60]
+TestData <- TestData[,8:60]
+```
+
+###### Testing for near zero variation
 
 ```{r}
-summary(cars)
+set.seed = 2345
+library(caret)
+nearZeroVar(TrainData)
 ```
 
-You can also embed plots, for example:
 
-```{r, echo=FALSE}
-plot(cars)
-```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Reference
+
+1. Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013. 
+
+2. http://groupware.les.inf.puc-rio.br/har#collaborators#ixzz3rJAkPebt
+
+
