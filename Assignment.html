@@ -82,14 +82,14 @@ img {
 <h2>Data</h2>
 <p>Using wearable sensors, “Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).” (reference 2)</p>
 <p>The data collected in this research forms the files provided for this machine learning exercise, where the object is to train a model using the training set data, and predict the class type of the results that form the test set.</p>
-<div id="loading-the-data" class="section level6">
-<h6>Loading the data</h6>
+<div id="loading-the-data" class="section level4">
+<h4>Loading the data</h4>
 <p>The csv formatted files were downloaded to the local R-Studio project folder, and read into R as follows:</p>
 <pre class="r"><code>TrainData &lt;- read.csv(&quot;pml-Training.csv&quot;)
 TestData &lt;- read.csv(&quot;pml-Testing.csv&quot;)</code></pre>
 </div>
-<div id="initial-inspection" class="section level6">
-<h6>Initial inspection</h6>
+<div id="initial-inspection" class="section level4">
+<h4>Initial inspection</h4>
 <p>The resulting data frames contain 160 columns of information, with 19622 observations in the training set, and 20 in the test set. Such a large difference in sizes would not normally be appropriate, but for the purposes of briefness of submission data the test set was kept deliberately small.</p>
 <p>An initial visual inspection of the data showed that many of the columns contain either blank or NA data. Inspecting the Test data alone these columns were seen to be completely empty of data, and therefore could not be used within a prediction model, so those columns were removed from both training and test data sets.</p>
 <pre class="r"><code>TrainData &lt;- TrainData[,colSums(is.na(TestData))==0]
@@ -98,16 +98,15 @@ TestData &lt;- TestData[,colSums(is.na(TestData))==0]</code></pre>
 <pre class="r"><code>TrainData &lt;- TrainData[,8:60]
 TestData &lt;- TestData[,8:60]</code></pre>
 </div>
-<div id="testing-for-near-zero-variation" class="section level6">
-<h6>Testing for near zero variation</h6>
-<pre class="r"><code>set.seed = 2345
-library(caret)</code></pre>
-<pre><code>## Warning: package 'caret' was built under R version 3.1.3</code></pre>
-<pre><code>## Loading required package: lattice
-## Loading required package: ggplot2</code></pre>
+<div id="testing-for-near-zero-variation" class="section level4">
+<h4>Testing for near zero variation</h4>
+<p>Running the near zero option from the caret package reveals no columns with very low variation, indicating that all 52 may be suitable for model building.</p>
 <pre class="r"><code>nearZeroVar(TrainData)</code></pre>
 <pre><code>## integer(0)</code></pre>
 </div>
+</div>
+<div id="selecting-covariates" class="section level2">
+<h2>Selecting covariates</h2>
 </div>
 <div id="reference" class="section level2">
 <h2>Reference</h2>

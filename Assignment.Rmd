@@ -26,7 +26,7 @@ Using wearable sensors, "Six young health participants were asked to perform one
 
 The data collected in this research forms the files provided for this machine learning exercise, where the object is to train a model using the training set data, and predict the class type of the results that form the test set.
 
-###### Loading the data
+#### Loading the data
 
 The csv formatted files were downloaded to the local R-Studio project folder, and read into R as follows:
 
@@ -35,7 +35,7 @@ TrainData <- read.csv("pml-Training.csv")
 TestData <- read.csv("pml-Testing.csv")
 ```
 
-###### Initial inspection
+#### Initial inspection
 
 The resulting data frames contain 160 columns of information, with 19622 observations in the training set, and 20 in the test set. Such a large difference in sizes would not normally be appropriate, but for the purposes of briefness of submission data the test set was kept deliberately small.
 
@@ -52,14 +52,47 @@ TrainData <- TrainData[,8:60]
 TestData <- TestData[,8:60]
 ```
 
-###### Testing for near zero variation
+#### Testing for near zero variation
+
+Running the near zero option from the caret package reveals no columns with very low variation, indicating that all 52 may be suitable for model building.
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+set.seed <- 2345
+library(caret)
+library(parallel)
+```
 
 ```{r}
-set.seed = 2345
-library(caret)
 nearZeroVar(TrainData)
 ```
 
+## Selecting covariates
+
+```{r cache=TRUE}
+preproc=preProcess(TrainData[,-53],method = "pca",thresh = 0.8)
+preproc
+trainPC=predict(preproc,TrainData[,-53])
+modelpca=train(TrainData$classe ~.,data=trainPC,trControl=trainControl(method="cv",number=3,allowParallel = TRUE))
+modelpca
+testPC=predict(preproc,TestData[,-53])
+predictpca=predict(modelpca,testPC)
+```
+
+
+## Constructing a full model
+
+```{r cache=TRUE}
+trainingModel <- train(classe ~.,data=TrainData,trControl=trainControl(method="cv",number=3,allowParallel = TRUE))
+trainingModel$finalModel
+```
+
+## Predictions
+
+```{r}
+prediction <- predict(trainingModel,newdata=TestData[,-53])
+predictpca=predict(modelpca,testPC)
+confusionMatrix(prediction,predictpca)
+```
 
 
 ## Reference
