@@ -107,6 +107,101 @@ TestData &lt;- TestData[,8:60]</code></pre>
 </div>
 <div id="selecting-covariates" class="section level2">
 <h2>Selecting covariates</h2>
+<pre class="r"><code>preproc=preProcess(TrainData[,-53],method = &quot;pca&quot;,thresh = 0.8)
+preproc</code></pre>
+<pre><code>## Created from 19622 samples and 52 variables
+## 
+## Pre-processing:
+##   - centered (52)
+##   - ignored (0)
+##   - principal component signal extraction (52)
+##   - scaled (52)
+## 
+## PCA needed 12 components to capture 80 percent of the variance</code></pre>
+<pre class="r"><code>trainPC=predict(preproc,TrainData[,-53])
+modelpca=train(TrainData$classe ~.,data=trainPC,trControl=trainControl(method=&quot;cv&quot;,number=3,allowParallel = TRUE))</code></pre>
+<pre><code>## Loading required package: randomForest</code></pre>
+<pre><code>## Warning: package 'randomForest' was built under R version 3.1.3</code></pre>
+<pre><code>## randomForest 4.6-12
+## Type rfNews() to see new features/changes/bug fixes.</code></pre>
+<pre class="r"><code>modelpca</code></pre>
+<pre><code>## Random Forest 
+## 
+## 19622 samples
+##    11 predictor
+##     5 classes: 'A', 'B', 'C', 'D', 'E' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (3 fold) 
+## Summary of sample sizes: 13082, 13081, 13081 
+## Resampling results across tuning parameters:
+## 
+##   mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
+##    2    0.9604016  0.9499050  0.003102577  0.003912420
+##    7    0.9547956  0.9428148  0.002938699  0.003699218
+##   12    0.9477627  0.9339308  0.003776350  0.004750918
+## 
+## Accuracy was used to select the optimal model using  the largest value.
+## The final value used for the model was mtry = 2.</code></pre>
+<pre class="r"><code>testPC=predict(preproc,TestData[,-53])
+predictpca=predict(modelpca,testPC)</code></pre>
+</div>
+<div id="constructing-a-full-model" class="section level2">
+<h2>Constructing a full model</h2>
+<pre class="r"><code>trainingModel &lt;- train(classe ~.,data=TrainData,trControl=trainControl(method=&quot;cv&quot;,number=3,allowParallel = TRUE))
+trainingModel$finalModel</code></pre>
+<pre><code>## 
+## Call:
+##  randomForest(x = x, y = y, mtry = param$mtry) 
+##                Type of random forest: classification
+##                      Number of trees: 500
+## No. of variables tried at each split: 2
+## 
+##         OOB estimate of  error rate: 0.43%
+## Confusion matrix:
+##      A    B    C    D    E  class.error
+## A 5578    2    0    0    0 0.0003584229
+## B   13 3780    4    0    0 0.0044772189
+## C    0   18 3404    0    0 0.0052600818
+## D    0    0   39 3174    3 0.0130597015
+## E    0    0    0    5 3602 0.0013861935</code></pre>
+</div>
+<div id="predictions" class="section level2">
+<h2>Predictions</h2>
+<pre class="r"><code>prediction &lt;- predict(trainingModel,newdata=TestData[,-53])
+predictpca=predict(modelpca,testPC)
+confusionMatrix(prediction,predictpca)</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction A B C D E
+##          A 7 0 0 0 0
+##          B 2 6 0 0 0
+##          C 0 0 1 0 0
+##          D 0 0 0 1 0
+##          E 0 0 0 0 3
+## 
+## Overall Statistics
+##                                          
+##                Accuracy : 0.9            
+##                  95% CI : (0.683, 0.9877)
+##     No Information Rate : 0.45           
+##     P-Value [Acc &gt; NIR] : 3.586e-05      
+##                                          
+##                   Kappa : 0.8561         
+##  Mcnemar's Test P-Value : NA             
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.7778   1.0000     1.00     1.00     1.00
+## Specificity            1.0000   0.8571     1.00     1.00     1.00
+## Pos Pred Value         1.0000   0.7500     1.00     1.00     1.00
+## Neg Pred Value         0.8462   1.0000     1.00     1.00     1.00
+## Prevalence             0.4500   0.3000     0.05     0.05     0.15
+## Detection Rate         0.3500   0.3000     0.05     0.05     0.15
+## Detection Prevalence   0.3500   0.4000     0.05     0.05     0.15
+## Balanced Accuracy      0.8889   0.9286     1.00     1.00     1.00</code></pre>
 </div>
 <div id="reference" class="section level2">
 <h2>Reference</h2>
