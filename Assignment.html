@@ -63,25 +63,27 @@ img {
 <div id="header">
 <h1 class="title">Practical Machine Learning Assignment</h1>
 <h4 class="author"><em>John Robinson</em></h4>
-<h4 class="date"><em>3 November 2015</em></h4>
+<h4 class="date"><em>17th November 2015</em></h4>
 </div>
 
 
 <div id="introduction" class="section level2">
 <h2>Introduction</h2>
-<p>This report describes a data learning and prediction exercise performed as part of the Coursera Practical Machine Learning course.Data from a publicly avaliable source were provided by the course supervisors as two files of results, a large training set, and a smaller test set.The data were investigated to create parsimonious sets of data, excluding any empty columns and non-numeric non predictive data such as identifiers.</p>
+<p>This report describes a data learning and prediction exercise performed as part of the Coursera Practical Machine Learning course. Data from a publicly available source were provided by the course supervisors as two files of results, a large training set, and a smaller test set. The data were investigated to create parsimonious sets of data, excluding any empty columns and non-numeric non predictive data such as identifiers.</p>
 <p>These data were then investigated for fields with close to zero variation, and also for close correlations, before selecting a set of principal components with which to train the data modelling.</p>
-<p>Cross validation was performed using the training data, and the best model used to predict the outcome of the test set, and to determine the expected out of sample error rate.</p>
+<p>A second analysis was performed using all of the available covariates, in order to compare the accuracy of each approach.</p>
+<p>In both models, validation was performed on the training data using three fold cross validation, and the best model used to predict the outcome of the test set, and to determine the expected out of sample error rate.</p>
+<p>Finally a prediction was run on the test data set, using both models, and the results compared, before selecting which result is most likely to be correct.</p>
 </div>
 <div id="background" class="section level2">
 <h2>Background</h2>
-<p>Human Activity Recognition is a research area of growing interest among computer researchers.The availability of human activity data has incresed dramatically with the sales of Smart Phones, Fitness Bands and other activity monitors.</p>
-<p>In Veloso et. al (Reference 1), data on ’Qualitative Activity Recognition of Weight Lifting Exercises are presented. The data used in this study has been made publicly available and forms the basis of this study. The work focussed on predicting how well a group of people performed a dumbell lifting exercise.</p>
+<p>Human Activity Recognition is a research area of growing interest among computer researchers. The availability of human activity data has increased dramatically with the sales of Smart Phones, Fitness Bands and other activity monitors.</p>
+<p>In Veloso et. al (Reference 1), data on ‘Qualitative Activity Recognition of Weight Lifting Exercises’ are presented. The data used in this study has been made publicly available and forms the basis of this study. The work focussed on predicting how well a group of people performed a dumbbell lifting exercise.</p>
 </div>
 <div id="data" class="section level2">
 <h2>Data</h2>
 <p>Using wearable sensors, “Six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).” (reference 2)</p>
-<p>The data collected in this research forms the files provided for this machine learning exercise, where the object is to train a model using the training set data, and predict the class type of the results that form the test set.</p>
+<p>The data collected in this research form the files provided for this machine learning exercise, where the object is to train a model using the training set data, and predict the class type of the results that form the test set.</p>
 <div id="loading-the-data" class="section level4">
 <h4>Loading the data</h4>
 <p>The csv formatted files were downloaded to the local R-Studio project folder, and read into R as follows:</p>
@@ -94,7 +96,8 @@ TestData &lt;- read.csv(&quot;pml-Testing.csv&quot;)</code></pre>
 <p>An initial visual inspection of the data showed that many of the columns contain either blank or NA data. Inspecting the Test data alone these columns were seen to be completely empty of data, and therefore could not be used within a prediction model, so those columns were removed from both training and test data sets.</p>
 <pre class="r"><code>TrainData &lt;- TrainData[,colSums(is.na(TestData))==0]
 TestData &lt;- TestData[,colSums(is.na(TestData))==0]</code></pre>
-<p>This left a total of 60 columns, including the outcome data. On detailed inspection of the data it was apparent that the first seven columns contained only non-numeric, and non predictive values, so they were removed to provide two data sets with 52 possible predictors, and one outcome.</p>
+<p>This left a total of 60 columns, including the outcome data.</p>
+<p>On detailed inspection of the data it was apparent that the first seven columns contained only non-numeric, and non predictive values, so they were removed to provide two data sets with 52 possible predictors, and one outcome.</p>
 <pre class="r"><code>TrainData &lt;- TrainData[,8:60]
 TestData &lt;- TestData[,8:60]</code></pre>
 </div>
@@ -105,8 +108,27 @@ TestData &lt;- TestData[,8:60]</code></pre>
 <pre><code>## integer(0)</code></pre>
 </div>
 </div>
-<div id="selecting-covariates" class="section level2">
-<h2>Selecting covariates</h2>
+<div id="modelling" class="section level2">
+<h2>Modelling</h2>
+<div id="selecting-covariates" class="section level4">
+<h4>Selecting covariates</h4>
+<p>The data contain a large number of covariates. One option is to accept all as being important and build a suitable training model using these. This could be computationally intensive, so it may be worth investigating a smaller number to achieve an acceptable level of accuracy in the prediction.</p>
+<p>Within the constraints of this project it is not possible to investigate each of the covariates individually, so a principal components approach has been used to determine the relationship between the number of covariates and the expected accuracy. The following graph shows the relationship between a threshold of variance description and the number of covariates required to account for that threshold.</p>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABUAAAAPACAMAAADDuCPrAAAAZlBMVEUAAAAAADoAAGYAOjoAOpAAZmYAZpAAZrY6AAA6OgA6kJA6kNtmAABmAGZmZjpmtv+QOgCQtpCQ29uQ2/+2ZgC2kDq2/7a2///bkDrbtmbb/7bb////AAD/tmb/25D//7b//9v///+KRk68AAAACXBIWXMAAB2HAAAdhwGP5fFlAAAgAElEQVR4nO3da2PTSqCeUbNLS07DKbTb7Xa7cSD//0/W8lXxRbHejCWNstYXIMEyQ5wnkjUaLV4BiCzG/gcA1EpAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChASUICQgAKEBBQgJKAAIQEFCAkoQEhAAUICChCadkAXAMWUT1TxLRY09v82MC/FG1V6gyU94AcG8GkJKEBIQAFCAgoQElCAkIAChAQUICSgACEBBQgJKEBIQAFCAgoQElCAkIAChAQUoOXX3j1/V0ABTn796lFQAQU4OobzroIKKMBBK5sCekFAgQ7tat5RUAEFOBDQLgIKdBDQLgIKdBDQLgIKdBDQLgIKdBDQ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" title alt width="672" /></p>
+<p>As the graph shows, in order to account for more than 90% of the variance the number of covariates required increases rapidly, suggesting that most, if not all, of the covariates are required for a truly accurate model.</p>
+<p>On this basis it was decided to compare two sets of covariates, and to compare their out of sample errors with the number of covariates required.</p>
+</div>
+<div id="selecting-a-model-type" class="section level4">
+<h4>Selecting a model type</h4>
+<p>As the data to be predicted form a categorical variable, with little information available to determine the basis upon which they were originally determined, the model cannot be formed by means of regression. Therefore some type of decision tree modelling is required. As the standard form of caret package training is a Random Forest approach, it was decided to use that.</p>
+</div>
+<div id="determining-the-expected-level-of-accuracy" class="section level4">
+<h4>Determining the expected level of accuracy</h4>
+<p>In order to determine out of sample error rates in the models, a cross validation technique using three-fold cross validation was selected. This can be built in to the training model using the caret packages training control options.</p>
+</div>
+<div id="model-1-using-principal-components" class="section level4">
+<h4>Model 1, using principal components</h4>
+<p>The first model was created using principal components with a threshold of covering 80% of the variation, resulting in a set of 12 covariates. The resulting model and its predicted out of sample error are shown here.</p>
 <pre class="r"><code>preproc=preProcess(TrainData[,-53],method = &quot;pca&quot;,thresh = 0.8)
 preproc</code></pre>
 <pre><code>## Created from 19622 samples and 52 variables
@@ -119,12 +141,8 @@ preproc</code></pre>
 ## 
 ## PCA needed 12 components to capture 80 percent of the variance</code></pre>
 <pre class="r"><code>trainPC=predict(preproc,TrainData[,-53])
-modelpca=train(TrainData$classe ~.,data=trainPC,trControl=trainControl(method=&quot;cv&quot;,number=3,allowParallel = TRUE))</code></pre>
-<pre><code>## Loading required package: randomForest</code></pre>
-<pre><code>## Warning: package 'randomForest' was built under R version 3.1.3</code></pre>
-<pre><code>## randomForest 4.6-12
-## Type rfNews() to see new features/changes/bug fixes.</code></pre>
-<pre class="r"><code>modelpca</code></pre>
+modelpca=train(TrainData$classe ~.,data=trainPC,trControl=trainControl(method=&quot;cv&quot;,number=3,allowParallel = TRUE))
+modelpca</code></pre>
 <pre><code>## Random Forest 
 ## 
 ## 19622 samples
@@ -133,23 +151,17 @@ modelpca=train(TrainData$classe ~.,data=trainPC,trControl=trainControl(method=&q
 ## 
 ## No pre-processing
 ## Resampling: Cross-Validated (3 fold) 
-## Summary of sample sizes: 13082, 13081, 13081 
+## Summary of sample sizes: 13081, 13081, 13082 
 ## Resampling results across tuning parameters:
 ## 
 ##   mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
-##    2    0.9604016  0.9499050  0.003102577  0.003912420
-##    7    0.9547956  0.9428148  0.002938699  0.003699218
-##   12    0.9477627  0.9339308  0.003776350  0.004750918
+##    2    0.9570381  0.9456526  0.003953672  0.005011699
+##    7    0.9498013  0.9365145  0.002734114  0.003464130
+##   12    0.9426155  0.9274435  0.003002288  0.003799150
 ## 
 ## Accuracy was used to select the optimal model using  the largest value.
 ## The final value used for the model was mtry = 2.</code></pre>
-<pre class="r"><code>testPC=predict(preproc,TestData[,-53])
-predictpca=predict(modelpca,testPC)</code></pre>
-</div>
-<div id="constructing-a-full-model" class="section level2">
-<h2>Constructing a full model</h2>
-<pre class="r"><code>trainingModel &lt;- train(classe ~.,data=TrainData,trControl=trainControl(method=&quot;cv&quot;,number=3,allowParallel = TRUE))
-trainingModel$finalModel</code></pre>
+<pre class="r"><code>modelpca$finalModel</code></pre>
 <pre><code>## 
 ## Call:
 ##  randomForest(x = x, y = y, mtry = param$mtry) 
@@ -157,51 +169,90 @@ trainingModel$finalModel</code></pre>
 ##                      Number of trees: 500
 ## No. of variables tried at each split: 2
 ## 
-##         OOB estimate of  error rate: 0.43%
+##         OOB estimate of  error rate: 2.71%
 ## Confusion matrix:
-##      A    B    C    D    E  class.error
-## A 5578    2    0    0    0 0.0003584229
-## B   13 3780    4    0    0 0.0044772189
-## C    0   18 3404    0    0 0.0052600818
-## D    0    0   39 3174    3 0.0130597015
-## E    0    0    0    5 3602 0.0013861935</code></pre>
+##      A    B    C    D    E class.error
+## A 5495   22   35   22    6  0.01523297
+## B   68 3660   56    9    4  0.03608112
+## C   17   38 3334   28    5  0.02571596
+## D   20    9  123 3057    7  0.04944030
+## E    4   19   19   20 3545  0.01718880</code></pre>
+<p>As can be seen, the accuracy of the best model is estimated at 96%, with an out of sample error rate estimated at 2.71%.</p>
+</div>
+<div id="model-2-using-all-available-covariates" class="section level4">
+<h4>Model 2, using all available covariates</h4>
+<p>The second model uses all 52 covariates, in a random forest model with three-fold cross validation.</p>
+<pre class="r"><code>trainingModel &lt;- train(classe ~.,data=TrainData,trControl=trainControl(method=&quot;cv&quot;,number=3,allowParallel = TRUE))
+trainingModel</code></pre>
+<pre><code>## Random Forest 
+## 
+## 19622 samples
+##    52 predictor
+##     5 classes: 'A', 'B', 'C', 'D', 'E' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (3 fold) 
+## Summary of sample sizes: 13081, 13082, 13081 
+## Resampling results across tuning parameters:
+## 
+##   mtry  Accuracy   Kappa      Accuracy SD   Kappa SD    
+##    2    0.9921006  0.9900067  0.0016847725  0.0021310281
+##   27    0.9929670  0.9911034  0.0011029523  0.0013956660
+##   52    0.9865967  0.9830456  0.0007548675  0.0009548057
+## 
+## Accuracy was used to select the optimal model using  the largest value.
+## The final value used for the model was mtry = 27.</code></pre>
+<pre class="r"><code>trainingModel$finalModel</code></pre>
+<pre><code>## 
+## Call:
+##  randomForest(x = x, y = y, mtry = param$mtry) 
+##                Type of random forest: classification
+##                      Number of trees: 500
+## No. of variables tried at each split: 27
+## 
+##         OOB estimate of  error rate: 0.45%
+## Confusion matrix:
+##      A    B    C    D    E class.error
+## A 5574    3    2    0    1 0.001075269
+## B   19 3772    6    0    0 0.006584145
+## C    0   12 3399   11    0 0.006721216
+## D    0    0   23 3190    3 0.008084577
+## E    0    1    4    4 3598 0.002495148</code></pre>
+<p>The accuracy of the best model is estimated at 99.3%, with an out of sample error rate estimated at 0.45%.</p>
+</div>
 </div>
 <div id="predictions" class="section level2">
 <h2>Predictions</h2>
-<pre class="r"><code>prediction &lt;- predict(trainingModel,newdata=TestData[,-53])
+<p>These two models were then applied to the 20 sets of data representing the test set. The 12 covariate principal component analysis prediction is:</p>
+<pre class="r"><code>testPC=predict(preproc,TestData[,-53])
 predictpca=predict(modelpca,testPC)
-confusionMatrix(prediction,predictpca)</code></pre>
-<pre><code>## Confusion Matrix and Statistics
-## 
-##           Reference
+predictpca</code></pre>
+<pre><code>##  [1] B A A A A E D B A A A C B A E E A B B B
+## Levels: A B C D E</code></pre>
+<p>The full 52 covariate analysis prediction is:</p>
+<pre class="r"><code>prediction &lt;- predict(trainingModel,newdata=TestData[,-53])
+prediction</code></pre>
+<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E</code></pre>
+<p>The differences can be seen with a confusion matrix</p>
+<pre class="r"><code>confusionMatrix(prediction,predictpca)$table</code></pre>
+<pre><code>##           Reference
 ## Prediction A B C D E
 ##          A 7 0 0 0 0
 ##          B 2 6 0 0 0
 ##          C 0 0 1 0 0
 ##          D 0 0 0 1 0
-##          E 0 0 0 0 3
-## 
-## Overall Statistics
-##                                          
-##                Accuracy : 0.9            
-##                  95% CI : (0.683, 0.9877)
-##     No Information Rate : 0.45           
-##     P-Value [Acc &gt; NIR] : 3.586e-05      
-##                                          
-##                   Kappa : 0.8561         
-##  Mcnemar's Test P-Value : NA             
-## 
-## Statistics by Class:
-## 
-##                      Class: A Class: B Class: C Class: D Class: E
-## Sensitivity            0.7778   1.0000     1.00     1.00     1.00
-## Specificity            1.0000   0.8571     1.00     1.00     1.00
-## Pos Pred Value         1.0000   0.7500     1.00     1.00     1.00
-## Neg Pred Value         0.8462   1.0000     1.00     1.00     1.00
-## Prevalence             0.4500   0.3000     0.05     0.05     0.15
-## Detection Rate         0.3500   0.3000     0.05     0.05     0.15
-## Detection Prevalence   0.3500   0.4000     0.05     0.05     0.15
-## Balanced Accuracy      0.8889   0.9286     1.00     1.00     1.00</code></pre>
+##          E 0 0 0 0 3</code></pre>
+<p>There is a difference in the prediction in two of the cases. It is assumed from the statistics of the models that the 52 covariate model is the more accurate.</p>
+</div>
+<div id="conclusion" class="section level2">
+<h2>Conclusion</h2>
+<p>Two models were created, the first a 12 covariate principal component analysis, and the second a full 52 covariate model. Each was used to train a predictive model using a Random Forest technique. Expected out of sample error rates were compared, showing that the full 52 covariate model was more accurate.</p>
+<p>The final expected out of sample error rate, based on the 52 covariate model was 0.45%</p>
+<p>The final prediction of the test data is:</p>
+<pre class="r"><code>prediction</code></pre>
+<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E</code></pre>
 </div>
 <div id="reference" class="section level2">
 <h2>Reference</h2>
